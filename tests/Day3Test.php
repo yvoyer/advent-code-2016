@@ -12,7 +12,15 @@ final class Day3Test extends PHPUnit_Framework_TestCase
      */
     public function test_it_should_return_the_number_of_valid_triangle($expected, $input)
     {
-        $this->assertSame($expected, Day3::main($input));
+        $this->assertCount($expected, Day3::partOne($input));
+    }
+
+    /**
+     * @dataProvider provideTestInput
+     */
+    public function test_it_should_test_part_1($input)
+    {
+        $this->assertCount(869, Day3::partOne($input));
     }
 
     public static function provideInputPart1()
@@ -38,8 +46,48 @@ final class Day3Test extends PHPUnit_Framework_TestCase
             [1, '8 10 7'],
             [0, '2 4 6'],
             [0, '100   10  90'],
-            [// 869 > X < 875
-                869, $input = <<<INPUT
+            [1, '101 102 103'],
+            [1, '201 202 203'],
+            [1, '301 302 303'],
+            [1, '401 402 403'],
+            [1, '501 502 503'],
+            [1, '601 602 603'],
+        ];
+    }
+
+    /**
+     * @dataProvider partTwoDataForTest
+     */
+    public function test_it_should_test_part_2_for_setup($expected, $input)
+    {
+        $this->assertCount($expected, Day3::partTwo($input));
+    }
+
+    public static function partTwoDataForTest()
+    {
+        return [
+            [6, '101  301  501
+102  302  502
+103  303   503
+201   401 601
+202 402     602
+203   403 603'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideTestInput
+     */
+    public function test_it_should_test_part_2($input)
+    {
+        $this->assertCount(1544, Day3::partTwo($input));
+    }
+
+    public static function provideTestInput()
+    {
+        return [
+            [
+                $input = <<<INPUT
   810  679   10
   783  255  616
   545  626  626

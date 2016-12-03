@@ -39,20 +39,83 @@ final class Day3
     /**
      * @param string $input
      *
-     * @return int
+     * @return Triangle[] The valid triangles
      */
-    public static function main($input)
+    public static function partOne($input)
     {
         $lines = explode("\n", $input);
         $valids = [];
         foreach ($lines as $triangleData) {
-            $triangle = Triangle::fromString($triangleData);
+            $triangle = Triangle::forPartOne($triangleData);
             if ($triangle->isValid()) {
                 $valids[] = $triangle;
             }
         }
 
-        return count($valids);
+        return $valids;
+    }
+
+    /**
+     * @param string $input
+     * @throws RuntimeException
+     *
+     * @return Triangle[]
+     */
+    public static function partTwo($input)
+    {
+        $lines = explode("\n", $input);
+        $matrix = [];
+        foreach ($lines as $columns) {
+            $digits = explode(' ', $columns);
+            $digits = array_map(
+                function ($string) {
+                    return trim($string);
+                },
+                $digits
+            );
+            $digits = array_values(
+                array_filter(
+                    $digits,
+                    function ($string) {
+                        return is_numeric($string);
+                    }
+                )
+            );
+            if (count($digits) !== 3) {
+                throw new \RuntimeException('Columns could not be parsed, ' . $columns);
+            }
+
+            $matrix[] = $digits;
+        }
+
+        $triangles = [];
+        $position = 0;
+        while (isset($matrix[$position])) {
+            $triangles[] = Triangle::fromString(
+                $matrix[$position][0],
+                $matrix[$position + 1][0],
+                $matrix[$position + 2][0]
+            );
+            $triangles[] = Triangle::fromString(
+                $matrix[$position][1],
+                $matrix[$position + 1][1],
+                $matrix[$position + 2][1]
+            );
+            $triangles[] = Triangle::fromString(
+                $matrix[$position][2],
+                $matrix[$position + 1][2],
+                $matrix[$position + 2][2]
+            );
+
+            $position += 3;
+        }
+
+        return array_filter(
+            $triangles,
+            function (Triangle $triangle) {
+                return $triangle->isValid();
+            }
+        );
     }
 }
 
@@ -107,12 +170,27 @@ class Triangle
     }
 
     /**
+     * @param int $a
+     * @param int $b
+     * @param int $c
+     *
+     * @return Triangle
+     */
+    public static function fromString($a, $b, $c)
+    {
+        \Assert\Assertion::integerish($a);
+        \Assert\Assertion::integerish($b);
+        \Assert\Assertion::integerish($c);
+        return new self((int) $a, (int) $b, (int) $c);
+    }
+
+    /**
      * @param string $string
      *
      * @return Triangle
      * @throws RuntimeException
      */
-    public static function fromString($string)
+    public static function forPartOne($string)
     {
         $sides = explode(' ', $string);
 
