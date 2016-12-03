@@ -36,7 +36,7 @@ final class Day1
 	/**
 	 * @param string $input
 	 *
-	 * @return int
+	 * @return World
 	 */
 	public static function main($input) {
 		$data = explode(', ', $input);
@@ -45,29 +45,35 @@ final class Day1
             $world->turn($cell);
 		}
 
-		return $world->distance();
+		return $world;
 	}
 }
 
 class World
 {
     /**
-     * @var int
+     * @var Coordinate
      */
-    public $x = 0;
-
-    /**
-     * @var int
-     */
-    public $y = 0;
+    private $coordinate;
 
     /**
      * @var Direction
      */
     private $currentDirection;
 
+    /**
+     * @var array
+     */
+    private $locationsVisited = [];
+
+    /**
+     * @var Coordinate The first location visited twice
+     */
+    private $firstLocationVisitedTwice;
+
     public function __construct()
     {
+        $this->coordinate = new Coordinate(0, 0);
         $this->currentDirection = new North(0);
     }
 
@@ -75,7 +81,6 @@ class World
     {
         $direction = substr($string, 0, 1);
         $number = substr($string, 1);
-
         $this->currentDirection = $this->currentDirection->turn($direction, $number);
         $this->currentDirection->updateWorld($this);
     }
@@ -85,7 +90,154 @@ class World
      */
     public function distance()
     {
+        return $this->coordinate->distance();
+    }
+
+    /**
+     * @return Coordinate|null
+     */
+    public function firstVisitedTwice()
+    {
+        return $this->firstLocationVisitedTwice;
+    }
+
+    public function addX($x)
+    {
+        for($i = 0; $i < $x; $i++) {
+            $this->updateCoordinate($this->coordinate->addX(1));
+        }
+    }
+
+    public function subtractX($x)
+    {
+        for($i = 0; $i < $x; $i++) {
+            $this->updateCoordinate($this->coordinate->subtractX(1));
+        }
+    }
+
+    public function addY($y)
+    {
+        for($i = 0; $i < $y; $i++) {
+            $this->updateCoordinate($this->coordinate->addY(1));
+        }
+    }
+
+    public function subtractY($y)
+    {
+        for($i = 0; $i < $y; $i++) {
+            $this->updateCoordinate($this->coordinate->subtractY(1));
+        }
+    }
+
+    /**
+     * @param Coordinate $coordinate
+     */
+    private function updateCoordinate(Coordinate $coordinate)
+    {
+        $this->coordinate = $coordinate;
+        $this->addToHistory($coordinate);
+        $this->visitCoordinate($coordinate);
+    }
+
+    private function addToHistory(Coordinate $location)
+    {
+        if (! isset($this->locationsVisited[$location->toString()])) {
+            $this->locationsVisited[$location->toString()] = 0;
+        }
+        $this->locationsVisited[$location->toString()]++;
+    }
+
+    /**
+     * @param Coordinate $location
+     */
+    private function visitCoordinate(Coordinate $location)
+    {
+        if (null !== $this->firstLocationVisitedTwice) {
+            return;
+        }
+
+        if ($this->locationsVisited[$location->toString()] == 2) {
+            $this->firstLocationVisitedTwice = $location;
+        }
+    }
+}
+
+class Coordinate
+{
+    /**
+     * @var int
+     */
+    private $x;
+
+    /**
+     * @var int
+     */
+    private $y;
+
+    /**
+     * @param int $x
+     * @param int $y
+     */
+    public function __construct($x, $y)
+    {
+        $this->x = $x;
+        $this->y = $y;
+    }
+
+    /**
+     * @param int $x
+     *
+     * @return Coordinate
+     */
+    public function addX($x)
+    {
+        return new self($this->x + $x, $this->y);
+    }
+
+    /**
+     * @param int $y
+     *
+     * @return Coordinate
+     */
+    public function addY($y)
+    {
+        return new self($this->x, $this->y + $y);
+    }
+
+    /**
+     * @param int $x
+     *
+     * @return Coordinate
+     */
+    public function subtractX($x)
+    {
+        return new self($this->x - $x, $this->y);
+    }
+
+    /**
+     * @param int $y
+     *
+     * @return Coordinate
+     */
+    public function subtractY($y)
+    {
+        return new self($this->x, $this->y - $y);
+    }
+
+    /**
+     * @return int
+     */
+    public function distance()
+    {
         return abs($this->x) + abs($this->y);
+    }
+
+    /**
+     * @return string
+     */
+    public function toString()
+    {
+        return $this->x . ',' . $this->y;
     }
 }
 
@@ -125,7 +277,7 @@ class North extends Direction
      */
     public function updateWorld(World $world)
     {
-        $world->y += $this->distance;
+        $world->addY($this->distance);
     }
 
     /**
@@ -147,7 +299,7 @@ class South extends Direction
      */
     public function updateWorld(World $world)
     {
-        $world->y -= $this->distance;
+        $world->subtractY($this->distance);
     }
 
     /**
@@ -169,7 +321,7 @@ class East extends Direction
      */
     public function updateWorld(World $world)
     {
-        $world->x += $this->distance;
+        $world->addX($this->distance);
     }
 
     /**
@@ -191,7 +343,7 @@ class West extends Direction
      */
     public function updateWorld(World $world)
     {
-        $world->x -= $this->distance;
+        $world->subtractX($this->distance);
     }
 
     /**
