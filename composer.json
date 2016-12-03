@@ -13,8 +13,8 @@
 		"phpunit/phpunit": "~4.0"
 	},
 	"autoload": {
-		"files": [
-			"day-1.php"
-		]
+		"psr-4": {
+            "": ["src", "tests"]
+        }
 	}
 }
