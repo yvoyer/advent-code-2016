@@ -47,7 +47,10 @@ Your puzzle input is the instructions from the document you found at the front d
 
 --- Part Two ---
 
-You finally arrive at the bathroom (it's a several minute walk from the lobby so visitors can behold the many fancy conference rooms and water coolers on this floor) and go to punch in the code. Much to your bladder's dismay, the keypad is not at all like you imagined it. Instead, you are confronted with the result of hundreds of man-hours of bathroom-keypad-design meetings:
+You finally arrive at the bathroom (it's a several minute walk from the lobby so visitors can behold the many fancy
+conference rooms and water coolers on this floor) and go to punch in the code. Much to your bladder's dismay, the
+keypad is not at all like you imagined it. Instead, you are confronted with the result of hundreds of man-hours of
+bathroom-keypad-design meetings:
 
     1
   2 3 4
@@ -55,7 +58,8 @@ You finally arrive at the bathroom (it's a several minute walk from the lobby so
   A B C
     D
 
-You still start at "5" and stop when you're at an edge, but given the same instructions as above, the outcome is very different:
+You still start at "5" and stop when you're at an edge, but given the same instructions as above, the outcome is very
+ different:
 
     You start at "5" and don't move at all (up and left are both edges), ending at 5.
     Continuing from "5", you move right twice and down three times (through "6", "7", "B", "D", "D"), ending at D.
@@ -68,10 +72,11 @@ final class Day2
 {
     /**
      * @param string $string
+     * @param Keypad $pad
      *
      * @return int The code
      */
-    public static function decodeCode($string)
+    public static function decodeCode($string, Keypad $pad)
     {
         $lines = explode("\n", $string);
         $previousDigit = new Digit(5);
@@ -80,19 +85,19 @@ final class Day2
             foreach (str_split($sequence) as $char) {
                 switch ($char) {
                     case 'U';
-                        $previousDigit = $previousDigit->up();
+                        $previousDigit = $previousDigit->up($pad);
                         break;
 
                     case 'D';
-                        $previousDigit = $previousDigit->down();
+                        $previousDigit = $previousDigit->down($pad);
                         break;
 
                     case 'R';
-                        $previousDigit = $previousDigit->right();
+                        $previousDigit = $previousDigit->right($pad);
                         break;
 
                     case 'L';
-                        $previousDigit = $previousDigit->left();
+                        $previousDigit = $previousDigit->left($pad);
                         break;
                 }
             }
@@ -101,12 +106,12 @@ final class Day2
 
         $resultArray = array_map(
             function(Digit $digit) {
-                return $digit->toInt();
+                return $digit->toString();
             },
             $digits
         );
 
-        return (int) implode('', $resultArray);
+        return implode('', $resultArray);
     }
 }
 
@@ -123,18 +128,239 @@ class Digit
      */
     public function __construct($digit)
     {
-        if ($digit > 9 || $digit < 1) {
-            throw new \InvalidArgumentException("The digit {$digit} is not supported.");
-        }
         $this->current = $digit;
     }
 
     /**
      * @return int
      */
-    public function toInt()
+    public function toString()
     {
         return $this->current;
+    }
+
+    /**
+     * @param KeyPad $keyPad
+     *
+     * @return Digit
+     */
+    public function up(KeyPad $keyPad)
+    {
+        if ($keyPad->allowedToUp($this)) {
+            return $keyPad->nextUp($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param KeyPad $keyPad
+     *
+     * @return Digit
+     */
+    public function down(KeyPad $keyPad)
+    {
+        if ($keyPad->allowedToDown($this)) {
+            return $keyPad->nextDown($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param KeyPad $keyPad
+     *
+     * @return Digit
+     */
+    public function right(KeyPad $keyPad)
+    {
+        if ($keyPad->allowedToRight($this)) {
+            return $keyPad->nextRight($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param KeyPad $keyPad
+     *
+     * @return Digit
+     */
+    public function left(KeyPad $keyPad)
+    {
+        if ($keyPad->allowedToLeft($this)) {
+            return $keyPad->nextLeft($this);
+        }
+
+        return $this;
+    }
+}
+
+abstract class KeyPad
+{
+    /**
+     * @var Key[]
+     */
+    protected $keys = [];
+
+    /**
+     * @param Digit $digit
+     *
+     * @return Digit
+     */
+    public function nextUp(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->up();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return Digit
+     */
+    public function nextDown(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->down();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return Digit
+     */
+    public function nextRight(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->right();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return Digit
+     */
+    public function nextLeft(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->left();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return bool
+     */
+    public function allowedToUp(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->canUp();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return bool
+     */
+    public function allowedToDown(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->canDowm();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return bool
+     */
+    public function allowedToRight(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->canRight();
+    }
+
+    /**
+     * @param Digit $digit
+     *
+     * @return bool
+     */
+    public function allowedToLeft(Digit $digit)
+    {
+        return $this->keys[$digit->toString()]->canLeft();
+    }
+}
+/**
+1 2 3
+4 5 6
+7 8 9
+*/
+class NineDigitKeyPad extends KeyPad
+{
+    public function __construct()
+    {
+        $this->keys[1] = Key::create(1)->allowDown(4)->allowRight(2);
+        $this->keys[2] = Key::create(2)->allowLeft(1)->allowRight(3)->allowDown(5);
+        $this->keys[3] = Key::create(3)->allowLeft(2)->allowDown(6);
+        $this->keys[4] = Key::create(4)->allowUp(1)->allowRight(5)->allowDown(7);
+        $this->keys[5] = Key::create(5)->allowUp(2)->allowRight(6)->allowDown(8)->allowLeft(4);
+        $this->keys[6] = Key::create(6)->allowUp(3)->allowLeft(5)->allowDown(9);
+        $this->keys[7] = Key::create(7)->allowUp(4)->allowRight(8);
+        $this->keys[8] = Key::create(8)->allowLeft(7)->allowUp(5)->allowRight(9);
+        $this->keys[9] = Key::create(9)->allowLeft(8)->allowUp(6);
+    }
+}
+
+/**
+    1
+  2 3 4
+5 6 7 8 9
+  A B C
+    D
+ */
+class StarShapedKeyPad extends KeyPad
+{
+    public function __construct()
+    {
+        $this->keys[1] = Key::create(1)->allowDown(3);
+        $this->keys[2] = Key::create(2)->allowDown(6)->allowRight(3);
+        $this->keys[3] = Key::create(3)->allowUp(1)->allowRight(4)->allowDown(7)->allowLeft(2);
+        $this->keys[4] = Key::create(4)->allowDown(8)->allowLeft(3);
+        $this->keys[5] = Key::create(5)->allowRight(6);
+        $this->keys[6] = Key::create(6)->allowUp(2)->allowRight(7)->allowDown('A')->allowLeft(5);
+        $this->keys[7] = Key::create(7)->allowUp(3)->allowRight(8)->allowDown('B')->allowLeft(6);
+        $this->keys[8] = Key::create(8)->allowUp(4)->allowRight(9)->allowDown('C')->allowLeft(7);
+        $this->keys[9] = Key::create(9)->allowLeft(8);
+        $this->keys['A'] = Key::create('A')->allowUp(6)->allowRight('B');
+        $this->keys['B'] = Key::create('B')->allowUp(7)->allowRight('C')->allowDown('D')->allowLeft('A');
+        $this->keys['C'] = Key::create('C')->allowUp(8)->allowLeft('B');
+        $this->keys['D'] = Key::create('D')->allowUp('B');
+    }
+}
+
+class Key
+{
+    /**
+     * @var int|string
+     */
+    private $current;
+
+    /**
+     * @var int|null
+     */
+    private $right;
+
+    /**
+     * @var int|null
+     */
+    private $left;
+
+    /**
+     * @var int|null
+     */
+    private $up;
+
+    /**
+     * @var int|null
+     */
+    private $down;
+
+    private function __construct($current)
+    {
+        $this->current = $current;
     }
 
     /**
@@ -142,11 +368,7 @@ class Digit
      */
     public function up()
     {
-        if ($this->allowedToUp()) {
-            return new self($this->current - 3);
-        }
-
-        return $this;
+        return new Digit($this->up);
     }
 
     /**
@@ -154,11 +376,7 @@ class Digit
      */
     public function down()
     {
-        if ($this->allowedToDown()) {
-            return new self($this->current + 3);
-        }
-
-        return $this;
+        return new Digit($this->down);
     }
 
     /**
@@ -166,11 +384,7 @@ class Digit
      */
     public function right()
     {
-        if ($this->allowedToRight()) {
-            return new self($this->current + 1);
-        }
-
-        return $this;
+        return new Digit($this->right);
     }
 
     /**
@@ -178,42 +392,96 @@ class Digit
      */
     public function left()
     {
-        if ($this->allowedToLeft()) {
-            return new self($this->current - 1);
-        }
+        return new Digit($this->left);
+    }
+
+    /**
+     * @return bool
+     */
+    public function canUp()
+    {
+        return isset($this->up);
+    }
+
+    /**
+     * @return bool
+     */
+    public function canDowm()
+    {
+        return isset($this->down);
+    }
+
+    /**
+     * @return bool
+     */
+    public function canRight()
+    {
+        return isset($this->right);
+    }
+
+    /**
+     * @return bool
+     */
+    public function canLeft()
+    {
+        return isset($this->left);
+    }
+
+    /**
+     * @param $number
+     *
+     * @return Key
+     */
+    public function allowDown($number)
+    {
+        $this->down = $number;
 
         return $this;
     }
 
     /**
-     * @return bool
+     * @param $number
+     *
+     * @return Key
      */
-    private function allowedToUp()
+    public function allowUp($number)
     {
-        return false !== array_search($this->toInt(), [4,5,6,7,8,9]);
+        $this->up = $number;
+
+        return $this;
     }
 
     /**
-     * @return bool
+     * @param $number
+     *
+     * @return Key
      */
-    private function allowedToDown()
+    public function allowRight($number)
     {
-        return false !== array_search($this->toInt(), [1,2,3,4,5,6]);
+        $this->right = $number;
+
+        return $this;
     }
 
     /**
-     * @return bool
+     * @param $number
+     *
+     * @return Key
      */
-    private function allowedToRight()
+    public function allowLeft($number)
     {
-        return false !== array_search($this->toInt(), [1,2,4,5,7,8]);
+        $this->left = $number;
+
+        return $this;
     }
 
     /**
-     * @return bool
+     * @param $current
+     *
+     * @return Key
      */
-    private function allowedToLeft()
+    public static function create($current)
     {
-        return false !== array_search($this->toInt(), [2,3,5,6,8,9]);
+        return new self($current);
     }
 }
